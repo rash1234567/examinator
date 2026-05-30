@@ -1,9 +1,36 @@
 import { Router } from "express";
-import { registerAccountForExaminer, login } from "../controllers/auth.controllers";
+import {
+  registerAccountForExaminer,
+  login,
+  verifyEmail,
+  resendVerificationEmail,
+  forgotPassword,
+  resetPassword,
+//   resetAllUsers,
+} from "../controllers/auth.controllers";
+import { validate } from "../middleware/validate.middleware";
+import {
+  examinerSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from "../validators/auth.validator";
 
-const router = Router();
+const authRouter = Router();
 
-router.post("/register-examiner", registerAccountForExaminer);
-router.post("/login", login);
+// authRouter.post("/reset-all-users", resetAllUsers);
+authRouter.post("/register-examiner", validate(examinerSchema), registerAccountForExaminer);
+authRouter.post("/login", login);
+authRouter.get("/verify-email", verifyEmail);
+authRouter.post("/resend-verification-email", resendVerificationEmail);
+authRouter.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  forgotPassword,
+);
+authRouter.post(
+  "/reset-password",
+  validate(resetPasswordSchema),
+  resetPassword,
+);
 
-export default router;
+export default authRouter;
