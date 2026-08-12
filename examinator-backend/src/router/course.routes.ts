@@ -9,6 +9,16 @@ import {
   patchCourse,
   deleteCourse,
 } from "../controllers/course.controllers";
+import {
+  deleteCourseStudent,
+  getCourseStudents,
+  postCourseStudent,
+  postCourseStudentsBulk,
+} from "../controllers/enrollment.controllers";
+import {
+  enrollBulkSchema,
+  enrollOneSchema,
+} from "../validators/enrollment.validator";
 
 /** Singular: one course per request (`POST` body = single course object). */
 const courseRouter = Router();
@@ -19,6 +29,36 @@ courseRouter.post(
   requireExaminer,
   validate(createCourseSchema),
   postCourse,
+);
+
+courseRouter.post(
+  "/:courseId/students/bulk",
+  authMiddleware,
+  requireExaminer,
+  validate(enrollBulkSchema),
+  postCourseStudentsBulk,
+);
+
+courseRouter.post(
+  "/:courseId/students",
+  authMiddleware,
+  requireExaminer,
+  validate(enrollOneSchema),
+  postCourseStudent,
+);
+
+courseRouter.get(
+  "/:courseId/students",
+  authMiddleware,
+  requireExaminer,
+  getCourseStudents,
+);
+
+courseRouter.delete(
+  "/:courseId/students/:studentId",
+  authMiddleware,
+  requireExaminer,
+  deleteCourseStudent,
 );
 
 courseRouter.get("/:id", authMiddleware, requireExaminer, getCourseById);

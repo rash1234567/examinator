@@ -14,6 +14,8 @@ import {
   generatePasswordResetToken,
   hashPasswordResetToken,
 } from "../utils/passwordReset";
+import { normalizeEmail, normalizeMatric } from "../utils/studentIdentity";
+import { resolveUserByEmail } from "../utils/resolveUser";
 
 const PASSWORD_RESET_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 const FORGOT_PASSWORD_MESSAGE =
@@ -121,10 +123,15 @@ export async function verifyEmail(req: Request, res: Response) {
 
 export async function resendVerificationEmail(req: Request, res: Response) {
   try {
-    const { email } = req.body; // 1. Find user
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const { email, school } = req.body;
+    const { user, ambiguous } = await resolveUserByEmail(email, school);
+
+    if (ambiguous) {
+      return res.status(400).json({
+        message:
+          "Multiple accounts use this email. Include your school name in the request body.",
+      });
+    }
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -194,11 +201,12 @@ export async function resendVerificationEmail(req: Request, res: Response) {
 
 export async function forgotPassword(req: Request, res: Response) {
   try {
-    const { email } = req.body;
+    const { email, school } = req.body;
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const { user, ambiguous } = await resolveUserByEmail(email, school);
+    if (ambiguous) {
+      return res.status(200).json({ message: FORGOT_PASSWORD_MESSAGE });
+    }
 
     if (
       user?.email &&
@@ -263,6 +271,7 @@ export async function resetPassword(req: Request, res: Response) {
         password: hashedPassword,
         passwordResetToken: null,
         passwordResetExpires: null,
+        isFirstLogin: false,
       },
     });
 
@@ -278,20 +287,55 @@ export async function resetPassword(req: Request, res: Response) {
 
 export async function login(req: Request, res: Response) {
   try {
-    const { email, password } = req.body;
+    const { school, email, matricNumber, password } = req.body;
 
-    const user = await prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-    if (!user?.emailVerified) {
+    let user = null;
+
+    if (email) {
+      const normalized = normalizeEmail(email);
+      if (school) {
+        user = await prisma.user.findUnique({
+          where: {
+            school_email: { school: school.trim(), email: normalized },
+          },
+        });
+      } else {
+        const matches = await prisma.user.findMany({
+          where: { email: normalized },
+        });
+        if (matches.length === 1) {
+          user = matches[0];
+        } else if (matches.length > 1) {
+          return res.status(400).json({
+            message:
+              "Multiple accounts use this email. Include your school in the login body.",
+          });
+        }
+      }
+    } else {
+      if (!school) {
+        return res.status(400).json({
+          message: "School is required when logging in with matric number",
+        });
+      }
+      const schoolKey = (school as string).trim();
+      user = await prisma.user.findUnique({
+        where: {
+          school_matricNumber: {
+            school: schoolKey,
+            matricNumber: normalizeMatric(matricNumber),
+          },
+        },
+      });
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid Credentials" });
+    }
+    if (!user.emailVerified) {
       return res.status(401).json({
         message: "Email not verified please check your email for verification",
       });
-    }
-    if (!user) {
-      return res.status(404).json({ message: "Invalid Credentials" });
     }
     const isPasswordValid = await bcrypt.compare(
       password,

@@ -1,0 +1,31 @@
+services:
+  backend:
+    build: .
+    container_name: examinator-backend
+    ports:
+      - "8989:8989"
+    environment:
+      DATABASE_URL: "postgresql://examinator_user:postgres@postgres:5432/examinator"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: examinator-postgres
+    environment:
+      POSTGRES_USER: examinator_user
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: examinator
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U examinator_user -d examinator"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

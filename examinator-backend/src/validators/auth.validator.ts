@@ -23,6 +23,12 @@ export const examinerSchema = z.object({
 
 export const forgotPasswordSchema = z.object({
   email: z.string().email(),
+  school: z.string().min(1).optional(),
+});
+
+export const resendVerificationSchema = z.object({
+  email: z.string().email(),
+  school: z.string().min(1).optional(),
 });
 
 export const resetPasswordSchema = z.object({

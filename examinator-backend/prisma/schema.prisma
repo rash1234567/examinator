@@ -7,51 +7,90 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  firstName     String
-  lastName      String
-  middleName    String?
-  email         String?  @unique
-  matricNumber  String?  @unique
-  password      String?
-  role          Role
-  provider      Provider @default(LOCAL)
-  providerId    String?
-  about         String?
-  school        String
-  emailVerified          Boolean   @default(false)
+  id                     String       @id @default(uuid())
+  firstName              String
+  lastName               String
+  middleName             String?
+  email                  String?
+  matricNumber           String?
+  password               String?
+  role                   Role
+  provider               Provider     @default(LOCAL)
+  providerId             String?
+  about                  String?
+  school                 String
+  emailVerified          Boolean      @default(false)
   passwordResetToken     String?
   passwordResetExpires   DateTime?
-  country       String?
-  department    String?
-  faculty       String?
-  lecturerId    String?
-  meta          Json?   
-  isFirstLogin  Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  courses       Course[]
+  country                String?
+  department             String?
+  faculty                String?
+  lecturerId             String?
+  meta                   Json?
+  isFirstLogin           Boolean      @default(true)
+  createdAt              DateTime     @default(now())
+  createdByExaminerId    String?
+  createdByExaminer      User?        @relation("ExaminerCreatedStudents", fields: [createdByExaminerId], references: [id], onDelete: SetNull)
+  studentsCreated        User[]       @relation("ExaminerCreatedStudents")
+  examinerCourses        Course[]     @relation("ExaminerCourses")
+  enrollments            Enrollment[] @relation("StudentEnrollments")
+  enrollmentsCreated     Enrollment[] @relation("EnrollmentEnrolledBy")
+
+  @@unique([school, email])
+  @@unique([school, matricNumber])
+  @@index([role, school])
+  @@index([createdByExaminerId])
 }
 
-/// Lecturer-owned offering. Use `academicYear`, `semester`, `studentLevel` for filters;
-/// put school-specific wording in `meta` (e.g. display labels, local term names).
+/// Lecturer-owned offering.
 model Course {
-  id             String   @id @default(uuid())
-  /** Short identifier (e.g. CSC101). Unique per lecturer — see @@unique below. */
-  courseCode     String
-  title          String
-  description    String   @default("") @db.Text
-  academicYear   String
-  semester       String
-  studentLevel   String?
-  meta           Json?
-  examinerId     String
-  examiner       User     @relation(fields: [examinerId], references: [id], onDelete: Cascade)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id           String       @id @default(uuid())
+  courseCode   String
+  title        String
+  description  String       @default("") @db.Text
+  academicYear String
+  semester     String
+  studentLevel String?
+  meta         Json?
+  examinerId   String
+  examiner     User         @relation("ExaminerCourses", fields: [examinerId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@unique([examinerId, courseCode])
   @@index([academicYear, semester])
   @@index([studentLevel])
+}
+
+/// Student ↔ course (checked course). One row per pair.
+model Enrollment {
+  id           String           @id @default(uuid())
+  studentId    String
+  courseId     String
+  student      User             @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status       EnrollmentStatus @default(ACTIVE)
+  enrolledById String?
+  enrolledBy   User?            @relation("EnrollmentEnrolledBy", fields: [enrolledById], references: [id], onDelete: SetNull)
+  source       EnrollmentSource @default(EXAMINER)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([studentId, courseId])
+  @@index([courseId, status])
+  @@index([studentId, status])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  DROPPED
+}
+
+enum EnrollmentSource {
+  EXAMINER
+  BULK_UPLOAD
+  SELF_REGISTER
 }
 
 enum Role {

@@ -97,16 +97,21 @@ export async function getCourses(req: Request, res: Response) {
     const semester = queryString(req.query.semester);
     const studentLevel = queryString(req.query.studentLevel);
     const courseCode = queryString(req.query.courseCode);
+    const page = req.query.page ? Number(req.query.page) : undefined;
+    const limit = req.query.limit ? Number(req.query.limit) : undefined;
 
-    const courses = await listCoursesForExaminer({
-      examinerId: userId,
-      academicYear,
-      semester,
-      studentLevel,
-      courseCode,
-    });
+    const result = await listCoursesForExaminer(
+      {
+        examinerId: userId,
+        academicYear,
+        semester,
+        studentLevel,
+        courseCode,
+      },
+      { page, limit },
+    );
 
-    res.status(200).json(courses);
+    res.status(200).json(result);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Something went wrong" });

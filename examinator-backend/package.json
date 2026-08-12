@@ -6,7 +6,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && pm2 restart examinator-api examinator-8990 examinator-8991"
   },
   "keywords": [],
   "author": "",

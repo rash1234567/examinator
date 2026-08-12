@@ -1,0 +1,21 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const examiner_middleware_1 = require("../middleware/examiner.middleware");
+const validate_middleware_1 = require("../middleware/validate.middleware");
+const course_validator_1 = require("../validators/course.validator");
+const course_controllers_1 = require("../controllers/course.controllers");
+const enrollment_controllers_1 = require("../controllers/enrollment.controllers");
+const enrollment_validator_1 = require("../validators/enrollment.validator");
+/** Singular: one course per request (`POST` body = single course object). */
+const courseRouter = (0, express_1.Router)();
+courseRouter.post("/", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, (0, validate_middleware_1.validate)(course_validator_1.createCourseSchema), course_controllers_1.postCourse);
+courseRouter.post("/:courseId/students/bulk", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, (0, validate_middleware_1.validate)(enrollment_validator_1.enrollBulkSchema), enrollment_controllers_1.postCourseStudentsBulk);
+courseRouter.post("/:courseId/students", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, (0, validate_middleware_1.validate)(enrollment_validator_1.enrollOneSchema), enrollment_controllers_1.postCourseStudent);
+courseRouter.get("/:courseId/students", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, enrollment_controllers_1.getCourseStudents);
+courseRouter.delete("/:courseId/students/:studentId", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, enrollment_controllers_1.deleteCourseStudent);
+courseRouter.get("/:id", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, course_controllers_1.getCourseById);
+courseRouter.patch("/:id", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, (0, validate_middleware_1.validate)(course_validator_1.updateCourseSchema), course_controllers_1.patchCourse);
+courseRouter.delete("/:id", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, course_controllers_1.deleteCourse);
+exports.default = courseRouter;

@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_controllers_1 = require("../controllers/auth.controllers");
+const validate_middleware_1 = require("../middleware/validate.middleware");
+const auth_validator_1 = require("../validators/auth.validator");
+const student_validator_1 = require("../validators/student.validator");
+const student_controllers_1 = require("../controllers/student.controllers");
+const authRouter = (0, express_1.Router)();
+// authRouter.post("/reset-all-users", resetAllUsers);
+authRouter.post("/register-examiner", (0, validate_middleware_1.validate)(auth_validator_1.examinerSchema), auth_controllers_1.registerAccountForExaminer);
+authRouter.post("/register-student", (0, validate_middleware_1.validate)(student_validator_1.registerStudentSchema), student_controllers_1.registerStudent);
+authRouter.post("/login", (0, validate_middleware_1.validate)(student_validator_1.loginSchema), auth_controllers_1.login);
+authRouter.get("/verify-email", auth_controllers_1.verifyEmail);
+authRouter.post("/resend-verification-email", (0, validate_middleware_1.validate)(auth_validator_1.resendVerificationSchema), auth_controllers_1.resendVerificationEmail);
+authRouter.post("/forgot-password", (0, validate_middleware_1.validate)(auth_validator_1.forgotPasswordSchema), auth_controllers_1.forgotPassword);
+authRouter.post("/reset-password", (0, validate_middleware_1.validate)(auth_validator_1.resetPasswordSchema), auth_controllers_1.resetPassword);
+exports.default = authRouter;

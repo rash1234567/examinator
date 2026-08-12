@@ -134,12 +134,30 @@ const examinerPublicSelect = {
   },
 };
 
-export async function listCoursesForExaminer(filters: CourseFilters) {
-  return prisma.course.findMany({
-    where: buildWhere(filters),
-    orderBy: { updatedAt: "desc" },
-    include: { examiner: examinerPublicSelect },
-  });
+export async function listCoursesForExaminer(
+  filters: CourseFilters,
+  opts: { page?: number; limit?: number } = {},
+) {
+  const page = Math.max(1, opts.page ?? 1);
+  const limit = Math.min(100, Math.max(1, opts.limit ?? 50));
+  const skip = (page - 1) * limit;
+  const where = buildWhere(filters);
+
+  const [courses, total] = await Promise.all([
+    prisma.course.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+      include: { examiner: examinerPublicSelect },
+    }),
+    prisma.course.count({ where }),
+  ]);
+
+  return {
+    courses,
+    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+  };
 }
 
 export async function getCourseByIdForExaminer(id: string, examinerId: string) {

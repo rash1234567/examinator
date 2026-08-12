@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const examiner_middleware_1 = require("../middleware/examiner.middleware");
+const student_middleware_1 = require("../middleware/student.middleware");
+const validate_middleware_1 = require("../middleware/validate.middleware");
+const student_validator_1 = require("../validators/student.validator");
+const student_controllers_1 = require("../controllers/student.controllers");
+const studentRouter = (0, express_1.Router)();
+studentRouter.get("/me/courses", auth_middleware_1.authMiddleware, student_middleware_1.requireStudent, student_controllers_1.getMyCourses);
+studentRouter.post("/", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, (0, validate_middleware_1.validate)(student_validator_1.createStudentSchema), student_controllers_1.postStudent);
+studentRouter.post("/bulk", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, (0, validate_middleware_1.validate)(student_validator_1.bulkStudentsBodySchema), student_controllers_1.postStudentsBulk);
+studentRouter.get("/", auth_middleware_1.authMiddleware, examiner_middleware_1.requireExaminer, student_controllers_1.getStudents);
+exports.default = studentRouter;
