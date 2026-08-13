@@ -17,10 +17,10 @@ jobs:
           chmod 600 ~/.ssh/ec2_key
 
           ssh -o StrictHostKeyChecking=no \
-  -i ~/.ssh/ec2_key \
-  ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-  "cd ~/examinator/examinator-backend && \
-   git pull origin main && \
-   docker compose --env-file .env.production -f docker-compose.prod.yml build && \
-   docker compose --env-file .env.production -f docker-compose.prod.yml up -d && \
-   docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy"
+            -i ~/.ssh/ec2_key \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+            "cd ~/examinator/examinator-backend && \
+             git pull origin main && \
+             docker compose --env-file .env.production -f docker-compose.prod.yml build && \
+             docker compose --env-file .env.production -f docker-compose.prod.yml up -d" \
+             docker compose --env-file .env.production -f docker-compose.prod.yml exec -T backend npx prisma migrate deploy"
