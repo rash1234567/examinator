@@ -103,7 +103,7 @@ app.get("/slow-test", async (req, res) => {
   });
 });
 
-app.get("testing-after-deploy", (req, res) => {
+app.get("/testing-after-deploy", (req, res) => {
   res.json({
     message: "Testing after deploy",
     pid: process.pid,
