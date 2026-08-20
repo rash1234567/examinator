@@ -50,10 +50,6 @@ app.get("/cache-test", (req, res) => {
         time: new Date().toISOString(),
     });
 });
-app.use((req, res, next) => {
-    console.log("GLOBAL HIT:", req.method, req.url);
-    next();
-});
 app.get("/rate-test", (req, res) => {
     res.json({
         message: "Rate limit test",
@@ -100,5 +96,11 @@ app.get("/slow-test", (req, res) => __awaiter(void 0, void 0, void 0, function* 
         pid: process.pid,
     });
 }));
+app.get("/testing-after-deploy", (req, res) => {
+    res.json({
+        message: "Testing after deploy",
+        pid: process.pid,
+    });
+});
 app.use(error_middleware_1.errorMiddleware);
 exports.default = app;
